@@ -1,0 +1,409 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+// ================= LINE DESIGN =================
+void line() {
+    printf("============================================================\n");
+}
+
+// ================= ADMIN LOGIN =================
+#define ADMIN_USER "admin"
+#define ADMIN_PASS "1234"
+
+// ================= STRUCTURES =================
+
+struct Student {
+    char id[20];
+    char department[10];
+    int votedSSC;
+    int votedDept;
+    struct Student* next;
+};
+
+struct Candidate {
+    char name[50];
+    char position[30];
+    char department[10];
+    char party[20]; // TeamA / TeamB
+    int votes;
+    struct Candidate* next;
+};
+
+// ================= GLOBAL =================
+
+struct Student* studentHead = NULL;
+struct Candidate* candidateHead = NULL;
+
+// ================= FIND STUDENT =================
+
+struct Student* findStudent(char id[]) {
+    struct Student* temp = studentHead;
+    while (temp != NULL) {
+        if (strcmp(temp->id, id) == 0)
+            return temp;
+        temp = temp->next;
+    }
+    return NULL;
+}
+
+// ================= REGISTER =================
+
+void registerStudent() {
+    struct Student* newNode = malloc(sizeof(struct Student));
+
+    line();
+    printf("REGISTER STUDENT\n");
+    line();
+
+    printf("Enter Student ID: ");
+    scanf("%s", newNode->id);
+
+    printf("Enter Department (COE/COT/CEng/CIT/ESAF/COC): ");
+    scanf("%s", newNode->department);
+
+    newNode->votedSSC = 0;
+    newNode->votedDept = 0;
+    newNode->next = studentHead;
+    studentHead = newNode;
+
+    printf("Student registered successfully!\n");
+    line();
+}
+
+// ================= ADD CANDIDATE =================
+
+void addCandidate() {
+    struct Candidate* newNode = malloc(sizeof(struct Candidate));
+
+    line();
+    printf("ADD CANDIDATE\n");
+    line();
+
+    printf("Enter Candidate Name: ");
+    scanf(" %[^\n]", newNode->name);
+
+    printf("Enter Position: ");
+    scanf(" %[^\n]", newNode->position);
+
+    printf("Enter Type (SSC/COE/COT/CEng/CIT/ESAF/COC): ");
+    scanf("%s", newNode->department);
+
+    printf("Enter Party (TeamA/TeamB): ");
+    scanf("%s", newNode->party);
+
+    newNode->votes = 0;
+    newNode->next = candidateHead;
+    candidateHead = newNode;
+
+    printf("Candidate added successfully!\n");
+    line();
+}
+
+// ================= VIEW CANDIDATES =================
+
+void viewCandidates(char type[]) {
+    struct Candidate* temp = candidateHead;
+    int found = 0;
+
+    line();
+    printf("CANDIDATES (%s)\n", type);
+    line();
+
+    while (temp != NULL) {
+        if (strcmp(temp->department, type) == 0) {
+            printf("- %s (%s) [%s] | Votes: %d\n",
+                   temp->name,
+                   temp->position,
+                   temp->party,
+                   temp->votes);
+            found = 1;
+        }
+        temp = temp->next;
+    }
+
+    if (!found)
+        printf("No candidates found.\n");
+
+    line();
+}
+
+// ================= SSC VOTING =================
+
+void voteSSC(struct Student* student) {
+    struct Candidate* temp = candidateHead;
+    int choice, i = 1;
+
+    if (student->votedSSC) {
+        printf("You already voted for SSC!\n");
+        return;
+    }
+
+    line();
+    printf("SSC ELECTION (OVERALL)\n");
+    line();
+
+    while (temp != NULL) {
+        if (strcmp(temp->department, "SSC") == 0) {
+            printf("%d. %s (%s) [%s]\n",
+                   i, temp->name, temp->position, temp->party);
+            i++;
+        }
+        temp = temp->next;
+    }
+
+    if (i == 1) {
+        printf("No SSC candidates available.\n");
+        return;
+    }
+
+    printf("Choose candidate: ");
+    scanf("%d", &choice);
+
+    temp = candidateHead;
+    i = 1;
+
+    while (temp != NULL) {
+        if (strcmp(temp->department, "SSC") == 0) {
+            if (i == choice) {
+                temp->votes++;
+                student->votedSSC = 1;
+                printf("Vote successful!\n");
+                return;
+            }
+            i++;
+        }
+        temp = temp->next;
+    }
+
+    printf("Invalid choice!\n");
+}
+
+// ================= DEPARTMENT VOTING =================
+
+void voteDepartment(struct Student* student) {
+    struct Candidate* temp = candidateHead;
+    int choice, i = 1;
+
+    if (student->votedDept) {
+        printf("You already voted in your department!\n");
+        return;
+    }
+
+    line();
+    printf("DEPARTMENT ELECTION (%s)\n", student->department);
+    line();
+
+    while (temp != NULL) {
+        if (strcmp(temp->department, student->department) == 0) {
+            printf("%d. %s (%s) [%s]\n",
+                   i, temp->name, temp->position, temp->party);
+            i++;
+        }
+        temp = temp->next;
+    }
+
+    if (i == 1) {
+        printf("No department candidates available.\n");
+        return;
+    }
+
+    printf("Choose candidate: ");
+    scanf("%d", &choice);
+
+    temp = candidateHead;
+    i = 1;
+
+    while (temp != NULL) {
+        if (strcmp(temp->department, student->department) == 0) {
+            if (i == choice) {
+                temp->votes++;
+                student->votedDept = 1;
+                printf("Vote successful!\n");
+                return;
+            }
+            i++;
+        }
+        temp = temp->next;
+    }
+
+    printf("Invalid choice!\n");
+}
+
+// ================= RESULTS =================
+
+void viewResults() {
+    struct Candidate* temp = candidateHead;
+
+    line();
+    printf("ELECTION RESULTS\n");
+    line();
+
+    while (temp != NULL) {
+        printf("%s (%s) [%s] - %d votes\n",
+               temp->name,
+               temp->department,
+               temp->party,
+               temp->votes);
+        temp = temp->next;
+    }
+
+    line();
+}
+
+// ================= PARTY RESULTS =================
+
+void viewPartyResults() {
+    int teamA = 0, teamB = 0;
+    struct Candidate* temp = candidateHead;
+
+    while (temp != NULL) {
+        if (strcmp(temp->party, "TeamA") == 0)
+            teamA += temp->votes;
+        else if (strcmp(temp->party, "TeamB") == 0)
+            teamB += temp->votes;
+        temp = temp->next;
+    }
+
+    line();
+    printf("PARTY RESULTS\n");
+    line();
+    printf("TeamA Total Votes: %d\n", teamA);
+    printf("TeamB Total Votes: %d\n", teamB);
+    line();
+}
+
+// ================= ADMIN =================
+
+int adminLogin() {
+    char user[20], pass[20];
+
+    line();
+    printf("ADMIN LOGIN\n");
+    line();
+
+    printf("Username: ");
+    scanf("%s", user);
+
+    printf("Password: ");
+    scanf("%s", pass);
+
+    if (strcmp(user, ADMIN_USER) == 0 &&
+        strcmp(pass, ADMIN_PASS) == 0) {
+        printf("Login successful!\n");
+        return 1;
+    }
+
+    printf("Invalid login!\n");
+    return 0;
+}
+
+void adminMenu() {
+    int choice;
+
+    do {
+        line();
+        printf("ADMIN PANEL\n");
+        line();
+
+        printf("1. Add Candidate\n");
+        printf("2. View SSC Candidates\n");
+        printf("3. View Department Candidates\n");
+        printf("4. View Results\n");
+        printf("5. View Party Results\n");
+        printf("6. Exit\n");
+
+        line();
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1: addCandidate(); break;
+            case 2: viewCandidates("SSC"); break;
+            case 3: {
+                char dept[10];
+                printf("Enter Department: ");
+                scanf("%s", dept);
+                viewCandidates(dept);
+                break;
+            }
+            case 4: viewResults(); break;
+            case 5: viewPartyResults(); break;
+        }
+
+    } while (choice != 6);
+}
+
+// ================= STUDENT LOGIN =================
+
+struct Student* studentLogin() {
+    char id[20];
+
+    line();
+    printf("STUDENT LOGIN\n");
+    line();
+
+    printf("Enter Student ID: ");
+    scanf("%s", id);
+
+    struct Student* s = findStudent(id);
+
+    if (s == NULL)
+        printf("Student not found!\n");
+
+    return s;
+}
+
+// ================= VOTE MENU =================
+
+void voteMenu(struct Student* student) {
+    int choice;
+
+    line();
+    printf("VOTING PORTAL\n");
+    printf("Student: %s (%s)\n", student->id, student->department);
+    line();
+
+    printf("1. Vote SSC (Overall)\n");
+    printf("2. Vote Department\n");
+
+    line();
+    printf("Enter choice: ");
+    scanf("%d", &choice);
+
+    if (choice == 1) voteSSC(student);
+    else if (choice == 2) voteDepartment(student);
+}
+
+// ================= MAIN =================
+
+int main() {
+    int choice;
+
+    do {
+        line();
+        printf("CBSUA SIPOCOT ELECTION SYSTEM\n");
+        line();
+
+        printf("1. Register Student\n");
+        printf("2. Student Login\n");
+        printf("3. Admin Login\n");
+        printf("4. Exit\n");
+
+        line();
+        printf("Enter choice: ");
+        scanf("%d", &choice);
+
+        if (choice == 1) registerStudent();
+        else if (choice == 2) {
+            struct Student* s = studentLogin();
+            if (s != NULL) voteMenu(s);
+        }
+        else if (choice == 3) {
+            if (adminLogin()) adminMenu();
+        }
+
+    } while (choice != 4);
+
+    return 0;
+}
